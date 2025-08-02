@@ -1,0 +1,66 @@
+version: "3.8"
+
+services:
+  # PostgreSQL 데이터베이스
+  postgres:
+    image: postgres:15-alpine
+    container_name: urlshortener_postgres_dev
+    environment:
+      POSTGRES_DB: urlshortener
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    networks:
+      - urlshortener_network
+
+  # Redis 캐시
+  redis:
+    image: redis:7-alpine
+    container_name: urlshortener_redis_dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_dev_data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - urlshortener_network
+
+  # Go API 서버 (개발용 - 볼륨 마운트)
+  api:
+    image: golang:1.21-alpine
+    container_name: urlshortener_api_dev
+    environment:
+      ENVIRONMENT: development
+      PORT: 8080
+      BASE_URL: http://localhost:8080
+      API_KEY: sk_marsboy_dev_key_1234567890
+      DATABASE_URL: postgres://postgres:password@postgres:5432/urlshortener?sslmode=disable
+      REDIS_ADDR: redis:6379
+      REDIS_PASSWORD: ""
+      REDIS_DB: 0
+      CGO_ENABLED: 0
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - .:/app
+      - go_mod_cache:/go/pkg/mod
+    working_dir: /app
+    command: sh -c "apk add --no-cache git && go mod download && go run cmd/server/main.go"
+    networks:
+      - urlshortener_network
+
+volumes:
+  postgres_dev_data:
+  redis_dev_data:
+  go_mod_cache:
+
+networks:
+  urlshortener_network:
+    driver: bridge

@@ -1,0 +1,61 @@
+version: "3.8"
+
+services:
+  # PostgreSQL 데이터베이스
+  postgres:
+    image: postgres:15-alpine
+    container_name: urlshortener_postgres
+    environment:
+      POSTGRES_DB: urlshortener
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    networks:
+      - urlshortener_network
+
+  # Redis 캐시
+  redis:
+    image: redis:7-alpine
+    container_name: urlshortener_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - urlshortener_network
+
+  # Go API 서버
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: urlshortener_api
+    environment:
+      ENVIRONMENT: development
+      PORT: 8080
+      BASE_URL: http://localhost:8080
+      API_KEY: sk_marsboy_dev_key_1234567890
+      DATABASE_URL: postgres://postgres:password@postgres:5432/urlshortener?sslmode=disable
+      REDIS_ADDR: redis:6379
+      REDIS_PASSWORD: ""
+      REDIS_DB: 0
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - urlshortener_network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  urlshortener_network:
+    driver: bridge
