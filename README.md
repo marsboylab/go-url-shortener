@@ -280,7 +280,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **Author**: marsboy
 - **Website**: [marsboy.dev](https://marsboy.dev)
-- **GitHub**: [@your-github](https://github.com/your-github)
+- **GitHub**: [@marsboy02](https://github.com/marsboy02)
 
 ---
 
