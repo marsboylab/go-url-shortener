@@ -11,17 +11,14 @@ import (
 	"go-url-shortener/internal/repository/interfaces"
 )
 
-// urlRepository는 PostgreSQL을 사용한 URL 저장소 구현입니다
 type urlRepository struct {
 	db *sql.DB
 }
 
-// NewURLRepository는 새로운 URL 저장소를 생성합니다
 func NewURLRepository(db *sql.DB) interfaces.URLRepository {
 	return &urlRepository{db: db}
 }
 
-// Create는 새로운 URL을 생성합니다
 func (r *urlRepository) Create(ctx context.Context, url *domain.URL) error {
 	query := `
 		INSERT INTO urls (id, original_url, description, expires_at, created_at, updated_at, 
@@ -50,7 +47,6 @@ func (r *urlRepository) Create(ctx context.Context, url *domain.URL) error {
 	return nil
 }
 
-// GetByID는 ID로 URL을 조회합니다
 func (r *urlRepository) GetByID(ctx context.Context, id string) (*domain.URL, error) {
 	query := `
 		SELECT id, original_url, description, expires_at, created_at, updated_at,
@@ -82,7 +78,6 @@ func (r *urlRepository) GetByID(ctx context.Context, id string) (*domain.URL, er
 	return url, nil
 }
 
-// Update는 URL을 업데이트합니다
 func (r *urlRepository) Update(ctx context.Context, url *domain.URL) error {
 	query := `
 		UPDATE urls 
@@ -117,7 +112,6 @@ func (r *urlRepository) Update(ctx context.Context, url *domain.URL) error {
 	return nil
 }
 
-// Delete는 URL을 삭제합니다 (soft delete)
 func (r *urlRepository) Delete(ctx context.Context, id string) error {
 	query := `UPDATE urls SET is_active = false, updated_at = $1 WHERE id = $2`
 	
@@ -138,7 +132,6 @@ func (r *urlRepository) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-// List는 URL 목록을 조회합니다
 func (r *urlRepository) List(ctx context.Context, apiKey string, options domain.URLListOptions) ([]domain.URL, int64, error) {
 	// 기본값 설정
 	if options.Page <= 0 {
@@ -154,7 +147,6 @@ func (r *urlRepository) List(ctx context.Context, apiKey string, options domain.
 		options.Order = "desc"
 	}
 	
-	// WHERE 절 구성
 	whereClause := "WHERE created_by_api_key = $1"
 	args := []interface{}{apiKey}
 	argIndex := 2
@@ -165,7 +157,6 @@ func (r *urlRepository) List(ctx context.Context, apiKey string, options domain.
 		argIndex++
 	}
 	
-	// 총 개수 조회
 	countQuery := "SELECT COUNT(*) FROM urls " + whereClause
 	var totalCount int64
 	err := r.db.QueryRowContext(ctx, countQuery, args...).Scan(&totalCount)
@@ -220,7 +211,6 @@ func (r *urlRepository) List(ctx context.Context, apiKey string, options domain.
 	return urls, totalCount, nil
 }
 
-// ExistsByID는 ID가 이미 존재하는지 확인합니다
 func (r *urlRepository) ExistsByID(ctx context.Context, id string) (bool, error) {
 	query := "SELECT EXISTS(SELECT 1 FROM urls WHERE id = $1)"
 	
@@ -233,7 +223,6 @@ func (r *urlRepository) ExistsByID(ctx context.Context, id string) (bool, error)
 	return exists, nil
 }
 
-// IncrementClickCount는 클릭 수를 증가시킵니다
 func (r *urlRepository) IncrementClickCount(ctx context.Context, id string) error {
 	query := `
 		UPDATE urls 
@@ -260,7 +249,6 @@ func (r *urlRepository) IncrementClickCount(ctx context.Context, id string) erro
 	return nil
 }
 
-// UpdateLastAccessed는 마지막 접근 시간을 업데이트합니다
 func (r *urlRepository) UpdateLastAccessed(ctx context.Context, id string) error {
 	query := `
 		UPDATE urls 
@@ -329,7 +317,6 @@ func (r *urlRepository) GetExpiredURLs(ctx context.Context, limit int) ([]domain
 	return urls, nil
 }
 
-// DeleteExpiredURLs는 만료된 URL들을 삭제합니다
 func (r *urlRepository) DeleteExpiredURLs(ctx context.Context, before time.Time) (int64, error) {
 	query := `UPDATE urls SET is_active = false, updated_at = $1 WHERE expires_at < $2 AND is_active = true`
 	
