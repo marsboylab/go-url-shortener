@@ -2,7 +2,6 @@ package service
 
 import "fmt"
 
-// ErrorCode는 서비스 레이어 에러 코드를 정의합니다
 type ErrorCode string
 
 const (
@@ -15,7 +14,6 @@ const (
 	ErrCodeExpired        ErrorCode = "expired"
 )
 
-// ServiceError는 서비스 레이어의 표준 에러 타입입니다
 type ServiceError struct {
 	Code    ErrorCode              `json:"error"`
 	Message string                 `json:"message"`
@@ -26,7 +24,6 @@ func (e *ServiceError) Error() string {
 	return fmt.Sprintf("[%s] %s", e.Code, e.Message)
 }
 
-// NewValidationError는 유효성 검사 에러를 생성합니다
 func NewValidationError(field, message string, details map[string]interface{}) *ServiceError {
 	if details == nil {
 		details = make(map[string]interface{})
@@ -40,7 +37,6 @@ func NewValidationError(field, message string, details map[string]interface{}) *
 	}
 }
 
-// NewNotFoundError는 리소스 없음 에러를 생성합니다
 func NewNotFoundError(resource string) *ServiceError {
 	return &ServiceError{
 		Code:    ErrCodeNotFound,
@@ -51,7 +47,6 @@ func NewNotFoundError(resource string) *ServiceError {
 	}
 }
 
-// NewConflictError는 충돌 에러를 생성합니다
 func NewConflictError(resource, identifier string) *ServiceError {
 	return &ServiceError{
 		Code:    ErrCodeConflict,
@@ -63,7 +58,6 @@ func NewConflictError(resource, identifier string) *ServiceError {
 	}
 }
 
-// NewInternalError는 내부 서버 에러를 생성합니다
 func NewInternalError(message string) *ServiceError {
 	return &ServiceError{
 		Code:    ErrCodeInternalError,
@@ -71,7 +65,6 @@ func NewInternalError(message string) *ServiceError {
 	}
 }
 
-// NewUnauthorizedError는 인증 에러를 생성합니다
 func NewUnauthorizedError(message string) *ServiceError {
 	return &ServiceError{
 		Code:    ErrCodeUnauthorized,
@@ -79,7 +72,6 @@ func NewUnauthorizedError(message string) *ServiceError {
 	}
 }
 
-// NewRateLimitError는 요청 제한 에러를 생성합니다
 func NewRateLimitError(limit int, window string) *ServiceError {
 	return &ServiceError{
 		Code:    ErrCodeRateLimit,
@@ -91,7 +83,6 @@ func NewRateLimitError(limit int, window string) *ServiceError {
 	}
 }
 
-// NewExpiredError는 만료 에러를 생성합니다
 func NewExpiredError(resource string) *ServiceError {
 	return &ServiceError{
 		Code:    ErrCodeExpired,
