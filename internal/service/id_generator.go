@@ -15,12 +15,10 @@ const (
 	defaultIDLength = 6
 )
 
-// IDGenerator는 Base62 인코딩을 사용한 고유 ID 생성기입니다
 type IDGenerator struct {
 	length int
 }
 
-// NewIDGenerator는 새로운 ID 생성기를 생성합니다
 func NewIDGenerator(length int) *IDGenerator {
 	if length < 3 {
 		length = defaultIDLength
@@ -30,13 +28,11 @@ func NewIDGenerator(length int) *IDGenerator {
 	}
 }
 
-// Generate는 랜덤한 Base62 ID를 생성합니다
 func (g *IDGenerator) Generate() (string, error) {
 	var result strings.Builder
 	result.Grow(g.length)
 	
 	for i := 0; i < g.length; i++ {
-		// 암호학적으로 안전한 랜덤 숫자 생성
 		num, err := rand.Int(rand.Reader, big.NewInt(base62Base))
 		if err != nil {
 			return "", err
@@ -47,7 +43,6 @@ func (g *IDGenerator) Generate() (string, error) {
 	return result.String(), nil
 }
 
-// EncodeNumber는 숫자를 Base62로 인코딩합니다
 func (g *IDGenerator) EncodeNumber(num int64) string {
 	if num == 0 {
 		return "0"
@@ -71,7 +66,6 @@ func (g *IDGenerator) EncodeNumber(num int64) string {
 	return string(runes)
 }
 
-// DecodeToNumber는 Base62 문자열을 숫자로 디코딩합니다
 func (g *IDGenerator) DecodeToNumber(encoded string) (int64, error) {
 	var result int64
 	var power int64 = 1
@@ -94,7 +88,6 @@ func (g *IDGenerator) DecodeToNumber(encoded string) (int64, error) {
 	return result, nil
 }
 
-// IsValidID는 주어진 문자열이 유효한 Base62 ID인지 확인합니다
 func (g *IDGenerator) IsValidID(id string) bool {
 	if len(id) == 0 {
 		return false
@@ -109,7 +102,6 @@ func (g *IDGenerator) IsValidID(id string) bool {
 	return true
 }
 
-// GenerateWithPrefix는 접두사가 있는 ID를 생성합니다
 func (g *IDGenerator) GenerateWithPrefix(prefix string) (string, error) {
 	id, err := g.Generate()
 	if err != nil {
@@ -118,21 +110,17 @@ func (g *IDGenerator) GenerateWithPrefix(prefix string) (string, error) {
 	return prefix + id, nil
 }
 
-// 유틸리티 함수들
-
-// QuickGenerate는 기본 길이의 랜덤 ID를 빠르게 생성합니다
+// utility functions
 func QuickGenerate() (string, error) {
 	generator := NewIDGenerator(defaultIDLength)
 	return generator.Generate()
 }
 
-// QuickEncode는 숫자를 Base62로 빠르게 인코딩합니다
 func QuickEncode(num int64) string {
 	generator := NewIDGenerator(defaultIDLength)
 	return generator.EncodeNumber(num)
 }
 
-// QuickDecode는 Base62 문자열을 숫자로 빠르게 디코딩합니다
 func QuickDecode(encoded string) (int64, error) {
 	generator := NewIDGenerator(defaultIDLength)
 	return generator.DecodeToNumber(encoded)
