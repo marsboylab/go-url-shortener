@@ -10,7 +10,6 @@ import (
 	"go-url-shortener/internal/repository/interfaces"
 )
 
-// URLService는 URL 관련 비즈니스 로직을 처리하는 서비스입니다
 type URLService struct {
 	urlRepo     interfaces.URLRepository
 	cacheRepo   interfaces.CacheRepository
@@ -18,7 +17,6 @@ type URLService struct {
 	baseURL     string
 }
 
-// NewURLService는 새로운 URL 서비스를 생성합니다
 func NewURLService(urlRepo interfaces.URLRepository, cacheRepo interfaces.CacheRepository, baseURL string) *URLService {
 	return &URLService{
 		urlRepo:     urlRepo,
@@ -28,7 +26,6 @@ func NewURLService(urlRepo interfaces.URLRepository, cacheRepo interfaces.CacheR
 	}
 }
 
-// CreateShortURL은 새로운 단축 URL을 생성합니다
 func (s *URLService) CreateShortURL(ctx context.Context, req domain.CreateURLRequest, apiKey string) (*domain.URL, error) {
 	// 원본 URL 유효성 검사
 	if err := domain.ValidateOriginalURL(req.OriginalURL); err != nil {
@@ -80,10 +77,8 @@ func (s *URLService) CreateShortURL(ctx context.Context, req domain.CreateURLReq
 		}
 	}
 
-	// URL 엔티티 생성
 	url := domain.NewURL(id, req.OriginalURL, req.Description, req.ExpiresAt, apiKey)
 	
-	// URL 빌드
 	url.BuildShortURL(s.baseURL)
 	url.BuildQRCodeURL(s.baseURL)
 
@@ -105,9 +100,7 @@ func (s *URLService) CreateShortURL(ctx context.Context, req domain.CreateURLReq
 	return url, nil
 }
 
-// GetURL은 단축 URL 정보를 조회합니다
 func (s *URLService) GetURL(ctx context.Context, id string) (*domain.URL, error) {
-	// 캐시에서 먼저 조회
 	url, err := s.cacheRepo.GetURL(ctx, id)
 	if err == nil {
 		url.BuildShortURL(s.baseURL)
@@ -115,7 +108,6 @@ func (s *URLService) GetURL(ctx context.Context, id string) (*domain.URL, error)
 		return url, nil
 	}
 
-	// 캐시에 없으면 데이터베이스에서 조회
 	url, err = s.urlRepo.GetByID(ctx, id)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
@@ -125,7 +117,6 @@ func (s *URLService) GetURL(ctx context.Context, id string) (*domain.URL, error)
 		return nil, NewInternalError("Failed to retrieve URL")
 	}
 
-	// URL 접근 가능성 확인
 	if !url.IsAccessible() {
 		if url.IsExpired() {
 			return nil, NewExpiredError("Short URL")
@@ -133,11 +124,9 @@ func (s *URLService) GetURL(ctx context.Context, id string) (*domain.URL, error)
 		return nil, NewNotFoundError("Short URL")
 	}
 
-	// URL 빌드
 	url.BuildShortURL(s.baseURL)
 	url.BuildQRCodeURL(s.baseURL)
 
-	// 캐시에 저장
 	if err := s.cacheRepo.SetURL(ctx, url, 5*time.Minute); err != nil {
 		log.Printf("Failed to cache URL: %v", err)
 	}
@@ -145,7 +134,6 @@ func (s *URLService) GetURL(ctx context.Context, id string) (*domain.URL, error)
 	return url, nil
 }
 
-// GetURLForRedirect는 리다이렉션을 위한 URL 조회입니다 (클릭 수 증가 포함)
 func (s *URLService) GetURLForRedirect(ctx context.Context, id string) (*domain.URL, error) {
 	url, err := s.GetURL(ctx, id)
 	if err != nil {
@@ -168,9 +156,8 @@ func (s *URLService) GetURLForRedirect(ctx context.Context, id string) (*domain.
 	return url, nil
 }
 
-// ListURLs는 URL 목록을 조회합니다
 func (s *URLService) ListURLs(ctx context.Context, apiKey string, options domain.URLListOptions) (*domain.URLListResponse, error) {
-	// 기본값 설정
+	// 기본값 설
 	if options.Page <= 0 {
 		options.Page = 1
 	}
@@ -214,9 +201,7 @@ func (s *URLService) ListURLs(ctx context.Context, apiKey string, options domain
 	}, nil
 }
 
-// UpdateURL은 URL을 업데이트합니다
 func (s *URLService) UpdateURL(ctx context.Context, id string, req domain.UpdateURLRequest, apiKey string) (*domain.URL, error) {
-	// 기존 URL 조회
 	url, err := s.urlRepo.GetByID(ctx, id)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
@@ -225,12 +210,10 @@ func (s *URLService) UpdateURL(ctx context.Context, id string, req domain.Update
 		return nil, NewInternalError("Failed to retrieve URL")
 	}
 
-	// 권한 확인
 	if url.CreatedByAPIKey != apiKey {
 		return nil, NewUnauthorizedError("You don't have permission to update this URL")
 	}
 
-	// 업데이트 필드 적용
 	if req.OriginalURL != nil {
 		if err := domain.ValidateOriginalURL(*req.OriginalURL); err != nil {
 			return nil, NewValidationError("original_url", err.Error(), nil)
@@ -252,13 +235,11 @@ func (s *URLService) UpdateURL(ctx context.Context, id string, req domain.Update
 
 	url.UpdatedAt = time.Now()
 
-	// 데이터베이스 업데이트
 	if err := s.urlRepo.Update(ctx, url); err != nil {
 		log.Printf("Failed to update URL: %v", err)
 		return nil, NewInternalError("Failed to update URL")
 	}
 
-	// 캐시 무효화
 	if err := s.cacheRepo.DeleteURL(ctx, id); err != nil {
 		log.Printf("Failed to invalidate cache for URL %s: %v", id, err)
 	}
@@ -270,9 +251,8 @@ func (s *URLService) UpdateURL(ctx context.Context, id string, req domain.Update
 	return url, nil
 }
 
-// DeleteURL은 URL을 삭제합니다 (soft delete)
+
 func (s *URLService) DeleteURL(ctx context.Context, id string, apiKey string) error {
-	// 기존 URL 조회
 	url, err := s.urlRepo.GetByID(ctx, id)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
@@ -281,18 +261,15 @@ func (s *URLService) DeleteURL(ctx context.Context, id string, apiKey string) er
 		return NewInternalError("Failed to retrieve URL")
 	}
 
-	// 권한 확인
 	if url.CreatedByAPIKey != apiKey {
 		return NewUnauthorizedError("You don't have permission to delete this URL")
 	}
 
-	// 삭제 처리
 	if err := s.urlRepo.Delete(ctx, id); err != nil {
 		log.Printf("Failed to delete URL: %v", err)
 		return NewInternalError("Failed to delete URL")
 	}
 
-	// 캐시 무효화
 	if err := s.cacheRepo.DeleteURL(ctx, id); err != nil {
 		log.Printf("Failed to invalidate cache for URL %s: %v", id, err)
 	}
@@ -300,7 +277,6 @@ func (s *URLService) DeleteURL(ctx context.Context, id string, apiKey string) er
 	return nil
 }
 
-// GetURLStats는 URL의 기본 통계를 조회합니다
 func (s *URLService) GetURLStats(ctx context.Context, id string, apiKey string) (*domain.URL, error) {
 	url, err := s.urlRepo.GetByID(ctx, id)
 	if err != nil {
@@ -310,19 +286,16 @@ func (s *URLService) GetURLStats(ctx context.Context, id string, apiKey string) 
 		return nil, NewInternalError("Failed to retrieve URL")
 	}
 
-	// 권한 확인
 	if url.CreatedByAPIKey != apiKey {
 		return nil, NewUnauthorizedError("You don't have permission to view this URL's stats")
 	}
 
-	// URL 빌드
 	url.BuildShortURL(s.baseURL)
 	url.BuildQRCodeURL(s.baseURL)
 
 	return url, nil
 }
 
-// CleanupExpiredURLs는 만료된 URL들을 정리합니다
 func (s *URLService) CleanupExpiredURLs(ctx context.Context) (int64, error) {
 	deleted, err := s.urlRepo.DeleteExpiredURLs(ctx, time.Now())
 	if err != nil {
