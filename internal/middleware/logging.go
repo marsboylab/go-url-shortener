@@ -9,7 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// RequestLogger는 요청 로깅 미들웨어입니다
 func RequestLogger() gin.HandlerFunc {
 	return gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
 		return fmt.Sprintf("[%s] \"%s %s %s\" %d %s \"%s\" \"%s\" %s\n",
@@ -26,17 +25,14 @@ func RequestLogger() gin.HandlerFunc {
 	})
 }
 
-// AccessLogger는 상세한 접근 로그를 기록합니다
 func AccessLogger() gin.HandlerFunc {
 	return gin.HandlerFunc(func(c *gin.Context) {
 		start := time.Now()
 		path := c.Request.URL.Path
 		raw := c.Request.URL.RawQuery
 		
-		// 요청 처리
 		c.Next()
 		
-		// 로그 기록
 		latency := time.Since(start)
 		clientIP := c.ClientIP()
 		method := c.Request.Method
@@ -75,7 +71,6 @@ func AccessLogger() gin.HandlerFunc {
 	})
 }
 
-// JSONBinding은 JSON 바인딩 에러를 처리하는 미들웨어입니다
 func JSONBinding() gin.HandlerFunc {
 	return gin.HandlerFunc(func(c *gin.Context) {
 		// Content-Type 확인
