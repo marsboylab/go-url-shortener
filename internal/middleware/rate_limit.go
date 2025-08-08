@@ -9,7 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// RateLimiter는 인메모리 속도 제한기입니다
 type RateLimiter struct {
 	requests map[string][]time.Time
 	mutex    sync.RWMutex
@@ -17,7 +16,6 @@ type RateLimiter struct {
 	window   time.Duration
 }
 
-// NewRateLimiter는 새로운 속도 제한기를 생성합니다
 func NewRateLimiter(limit int, window time.Duration) *RateLimiter {
 	rl := &RateLimiter{
 		requests: make(map[string][]time.Time),
@@ -31,7 +29,6 @@ func NewRateLimiter(limit int, window time.Duration) *RateLimiter {
 	return rl
 }
 
-// Allow는 주어진 키에 대해 요청을 허용할지 확인합니다
 func (rl *RateLimiter) Allow(key string) bool {
 	rl.mutex.Lock()
 	defer rl.mutex.Unlock()
@@ -126,7 +123,6 @@ func RateLimitWithLimiter(limiter *RateLimiter) gin.HandlerFunc {
 	})
 }
 
-// getClientID는 클라이언트 식별자를 생성합니다
 func getClientID(c *gin.Context) string {
 	// X-Forwarded-For 헤더에서 실제 IP 추출
 	clientIP := c.ClientIP()
