@@ -11,19 +11,16 @@ import (
 	"go-url-shortener/internal/service"
 )
 
-// URLHandler는 URL 관련 HTTP 요청을 처리하는 핸들러입니다
 type URLHandler struct {
 	urlService *service.URLService
 }
 
-// NewURLHandler는 새로운 URL 핸들러를 생성합니다
 func NewURLHandler(urlService *service.URLService) *URLHandler {
 	return &URLHandler{
 		urlService: urlService,
 	}
 }
 
-// CreateShortURL는 새로운 단축 URL을 생성합니다
 // @Summary 단축 URL 생성
 // @Description 긴 URL을 짧은 URL로 단축합니다. 커스텀 ID, 만료시간, 설명을 선택적으로 설정할 수 있습니다.
 // @Tags URLs
@@ -69,7 +66,6 @@ func (h *URLHandler) CreateShortURL(c *gin.Context) {
 	c.JSON(http.StatusCreated, url)
 }
 
-// GetURLInfo는 단축 URL의 상세 정보를 조회합니다
 // @Summary 단축 URL 정보 조회
 // @Description 단축 URL의 상세 정보를 조회합니다. 클릭 수, 생성일, 만료일 등의 정보를 확인할 수 있습니다.
 // @Tags URLs
@@ -104,7 +100,6 @@ func (h *URLHandler) GetURLInfo(c *gin.Context) {
 	c.JSON(http.StatusOK, url)
 }
 
-// ListURLs는 URL 목록을 조회합니다
 // @Summary URL 목록 조회
 // @Description 내가 생성한 단축 URL 목록을 페이지네이션과 함께 조회합니다. 정렬 및 필터링이 가능합니다.
 // @Tags URLs
@@ -146,7 +141,6 @@ func (h *URLHandler) ListURLs(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// UpdateURL은 URL을 업데이트합니다
 // PUT /api/v1/urls/:id
 func (h *URLHandler) UpdateURL(c *gin.Context) {
 	id := c.Param("id")
@@ -182,7 +176,6 @@ func (h *URLHandler) UpdateURL(c *gin.Context) {
 	c.JSON(http.StatusOK, url)
 }
 
-// DeleteURL은 URL을 삭제합니다
 // DELETE /api/v1/urls/:id
 func (h *URLHandler) DeleteURL(c *gin.Context) {
 	id := c.Param("id")
@@ -205,7 +198,6 @@ func (h *URLHandler) DeleteURL(c *gin.Context) {
 	c.JSON(http.StatusNoContent, nil)
 }
 
-// RedirectURL은 단축 URL을 원본 URL로 리다이렉트합니다
 // @Summary URL 리다이렉션
 // @Description 단축 URL에 접근하면 원본 URL로 리다이렉트합니다. 클릭 수가 자동으로 증가합니다.
 // @Tags Redirect
@@ -239,7 +231,6 @@ func (h *URLHandler) RedirectURL(c *gin.Context) {
 	c.Redirect(http.StatusMovedPermanently, url.OriginalURL)
 }
 
-// GetQRCode는 단축 URL의 QR 코드를 생성합니다
 // @Summary QR 코드 생성
 // @Description 단축 URL의 QR 코드를 생성합니다. 크기를 조정할 수 있습니다.
 // @Tags QR Code
@@ -275,7 +266,8 @@ func (h *URLHandler) GetQRCode(c *gin.Context) {
 		return
 	}
 	
-	// QR 코드 생성 (실제 구현에서는 qr 라이브러리 사용)
+	// QR 코드 생성
+	// TODO: 실제 구현에서는 qr 라이브러리 사용
 	// 여기서는 외부 서비스로 리다이렉트
 	qrURL := "https://api.qrserver.com/v1/create-qr-code/?size=" + 
 			 strconv.Itoa(sizeInt) + "x" + strconv.Itoa(sizeInt) + 
@@ -284,7 +276,6 @@ func (h *URLHandler) GetQRCode(c *gin.Context) {
 	c.Redirect(http.StatusMovedPermanently, qrURL)
 }
 
-// GetAnalytics는 URL의 분석 데이터를 조회합니다
 // GET /api/v1/urls/:id/analytics
 func (h *URLHandler) GetAnalytics(c *gin.Context) {
 	id := c.Param("id")
@@ -305,7 +296,8 @@ func (h *URLHandler) GetAnalytics(c *gin.Context) {
 		return
 	}
 	
-	// 기본 분석 옵션으로 응답 (실제 분석 서비스 구현 필요)
+	// 기본 분석 옵션으로 응답
+	// TODO: 실제 분석 서비스 구현 필요
 	analytics := gin.H{
 		"url_id":       id,
 		"total_clicks": 0,
@@ -316,7 +308,6 @@ func (h *URLHandler) GetAnalytics(c *gin.Context) {
 	c.JSON(http.StatusOK, analytics)
 }
 
-// handleError는 서비스 에러를 HTTP 응답으로 변환합니다
 func (h *URLHandler) handleError(c *gin.Context, err error) {
 	if serviceErr, ok := err.(*service.ServiceError); ok {
 		statusCode := h.getHTTPStatusFromErrorCode(serviceErr.Code)
@@ -331,7 +322,6 @@ func (h *URLHandler) handleError(c *gin.Context, err error) {
 	})
 }
 
-// getHTTPStatusFromErrorCode는 서비스 에러 코드를 HTTP 상태 코드로 변환합니다
 func (h *URLHandler) getHTTPStatusFromErrorCode(code service.ErrorCode) int {
 	switch code {
 	case service.ErrCodeValidation:
