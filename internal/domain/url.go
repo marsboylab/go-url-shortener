@@ -6,7 +6,6 @@ import (
 	"time"
 )
 
-// URL은 단축 URL의 도메인 엔티티입니다
 type URL struct {
 	ID              string     `json:"id" db:"id" example:"my-project" format:"string" description:"단축 URL의 고유 식별자"`
 	ShortURL        string     `json:"short_url" db:"-" example:"https://marsboy.dev/my-project" format:"uri" description:"완전한 단축 URL"`
@@ -22,7 +21,6 @@ type URL struct {
 	CreatedByAPIKey string     `json:"-" db:"created_by_api_key"`
 }
 
-// CreateURLRequest는 URL 생성 요청 구조체입니다
 type CreateURLRequest struct {
 	OriginalURL string     `json:"original_url" binding:"required,url,max=2048" example:"https://github.com/username/awesome-project/blob/main/README.md" format:"uri" description:"단축할 원본 URL (최대 2048자)"`
 	CustomID    *string    `json:"custom_id,omitempty" binding:"omitempty,min=3,max=50" example:"my-project" minLength:"3" maxLength:"50" description:"커스텀 식별자 (3-50자, 영숫자와 하이픈만)"`
@@ -30,7 +28,6 @@ type CreateURLRequest struct {
 	Description *string    `json:"description,omitempty" binding:"omitempty,max=255" example:"My awesome project repository" maxLength:"255" description:"URL 설명 (최대 255자)"`
 }
 
-// UpdateURLRequest는 URL 업데이트 요청 구조체입니다
 type UpdateURLRequest struct {
 	OriginalURL *string    `json:"original_url,omitempty" binding:"omitempty,url,max=2048"`
 	Description *string    `json:"description,omitempty" binding:"omitempty,max=255"`
@@ -38,13 +35,11 @@ type UpdateURLRequest struct {
 	IsActive    *bool      `json:"is_active,omitempty"`
 }
 
-// URLListResponse는 URL 목록 응답 구조체입니다
 type URLListResponse struct {
 	URLs       []URL          `json:"urls" description:"URL 목록"`
 	Pagination PaginationMeta `json:"pagination" description:"페이지네이션 정보"`
 }
 
-// PaginationMeta는 페이지네이션 메타데이터입니다
 type PaginationMeta struct {
 	CurrentPage int   `json:"current_page" example:"1" minimum:"1" description:"현재 페이지 번호"`
 	PerPage     int   `json:"per_page" example:"20" minimum:"1" maximum:"100" description:"페이지당 항목 수"`
@@ -54,7 +49,6 @@ type PaginationMeta struct {
 	HasPrev     bool  `json:"has_prev" example:"false" description:"이전 페이지 존재 여부"`
 }
 
-// URLListOptions는 URL 목록 조회 옵션입니다
 type URLListOptions struct {
 	Page     int    `form:"page" binding:"omitempty,min=1"`
 	Limit    int    `form:"limit" binding:"omitempty,min=1,max=100"`
@@ -63,7 +57,6 @@ type URLListOptions struct {
 	IsActive *bool  `form:"is_active,omitempty"`
 }
 
-// NewURL은 새로운 URL 엔티티를 생성합니다
 func NewURL(id, originalURL string, description *string, expiresAt *time.Time, apiKey string) *URL {
 	now := time.Now()
 	return &URL{
@@ -79,7 +72,6 @@ func NewURL(id, originalURL string, description *string, expiresAt *time.Time, a
 	}
 }
 
-// IsExpired는 URL이 만료되었는지 확인합니다
 func (u *URL) IsExpired() bool {
 	if u.ExpiresAt == nil {
 		return false
@@ -87,29 +79,24 @@ func (u *URL) IsExpired() bool {
 	return time.Now().After(*u.ExpiresAt)
 }
 
-// IsAccessible은 URL에 접근 가능한지 확인합니다
 func (u *URL) IsAccessible() bool {
 	return u.IsActive && !u.IsExpired()
 }
 
-// IncrementClickCount는 클릭 수를 증가시킵니다
 func (u *URL) IncrementClickCount() {
 	u.ClickCount++
 	now := time.Now()
 	u.LastAccessedAt = &now
 }
 
-// BuildShortURL은 완전한 단축 URL을 구성합니다
 func (u *URL) BuildShortURL(baseURL string) {
 	u.ShortURL = strings.TrimRight(baseURL, "/") + "/" + u.ID
 }
 
-// BuildQRCodeURL은 QR 코드 URL을 구성합니다
 func (u *URL) BuildQRCodeURL(baseURL string) {
 	u.QRCodeURL = strings.TrimRight(baseURL, "/") + "/api/v1/urls/" + u.ID + "/qr"
 }
 
-// ValidateOriginalURL은 원본 URL의 유효성을 검사합니다
 func ValidateOriginalURL(rawURL string) error {
 	if rawURL == "" {
 		return NewValidationError("original_url", "URL is required")
@@ -131,7 +118,6 @@ func ValidateOriginalURL(rawURL string) error {
 	return nil
 }
 
-// ValidateCustomID는 커스텀 ID의 유효성을 검사합니다
 func ValidateCustomID(customID string) error {
 	if len(customID) < 3 || len(customID) > 50 {
 		return NewValidationError("custom_id", "Custom ID must be between 3 and 50 characters")
@@ -159,7 +145,6 @@ func ValidateCustomID(customID string) error {
 	return nil
 }
 
-// ValidationError는 도메인 레벨 유효성 검사 에러입니다
 type ValidationError struct {
 	Field   string `json:"field"`
 	Message string `json:"message"`
@@ -169,7 +154,6 @@ func (e *ValidationError) Error() string {
 	return e.Message
 }
 
-// NewValidationError는 새로운 유효성 검사 에러를 생성합니다
 func NewValidationError(field, message string) *ValidationError {
 	return &ValidationError{
 		Field:   field,
