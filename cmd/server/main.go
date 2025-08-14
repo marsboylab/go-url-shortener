@@ -46,15 +46,12 @@ import (
 // @externalDocs.url https://www.notion.so/teamsparta/Go-URL-Shortener-Project-2432dc3ef51481998ac9d5b55bfd4ee3
 
 func main() {
-	// 환경 변수 로드
 	if err := godotenv.Load(); err != nil {
 		log.Printf("Warning: .env file not found: %v", err)
 	}
 
-	// 설정 로드
 	cfg := config.Load()
 
-	// 데이터베이스 연결
 	db, err := sql.Open("postgres", cfg.DatabaseURL)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
@@ -65,24 +62,19 @@ func main() {
 		log.Fatalf("Failed to ping database: %v", err)
 	}
 
-	// Redis 연결
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     cfg.RedisAddr,
 		Password: cfg.RedisPassword,
 		DB:       cfg.RedisDB,
 	})
 
-	// Repository 초기화
 	urlRepo := postgres.NewURLRepository(db)
 	cacheRepo := redisRepo.NewCacheRepository(rdb)
 
-	// Service 초기화
 	urlService := service.NewURLService(urlRepo, cacheRepo, cfg.BaseURL)
 
-	// Handler 초기화
 	urlHandler := handler.NewURLHandler(urlService)
 
-	// Gin 라우터 설정
 	if cfg.Environment == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -93,10 +85,8 @@ func main() {
 	router.Use(middleware.CORS())
 	router.Use(middleware.RateLimit())
 
-	// 헬스체크
 	router.GET("/health", healthCheck)
 
-	// API 라우트
 	api := router.Group("/api/v1")
 	{
 		api.POST("/urls", middleware.APIKeyAuth(cfg.APIKey), urlHandler.CreateShortURL)
