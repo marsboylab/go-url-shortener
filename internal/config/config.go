@@ -5,31 +5,29 @@ import (
 	"strconv"
 )
 
-// Config는 애플리케이션 설정을 담는 구조체입니다
 type Config struct {
-	// 서버 설정
+	// server
 	Environment string
 	Port        string
 	BaseURL     string
 	APIKey      string
 
-	// 데이터베이스 설정
+	// database
 	DatabaseURL   string
 	RedisAddr     string
 	RedisPassword string
 	RedisDB       int
 
-	// URL 설정
+	// url
 	DefaultIDLength int
 	MaxURLLength    int
 	MaxDescLength   int
 
-	// 보안 설정
+	// security
 	RateLimitPerMinute int
 	CacheExpiration    int // seconds
 }
 
-// Load는 환경 변수에서 설정을 로드합니다
 func Load() *Config {
 	redisDB := 0
 	if db := os.Getenv("REDIS_DB"); db != "" {
@@ -93,7 +91,6 @@ func Load() *Config {
 	}
 }
 
-// getEnv는 환경 변수를 가져오고, 없으면 기본값을 반환합니다
 func getEnv(key, defaultValue string) string {
 	if value := os.Getenv(key); value != "" {
 		return value
